@@ -1,3 +1,3 @@
 # Data-Structures
 
-This is a test readme.
+This repo contains python implementations of some important data structures and their applications. 
