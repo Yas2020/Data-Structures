@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-#from BSTwithDuplicates import *
 import math
 import os
 import random
@@ -8,10 +7,10 @@ import re
 import sys
 
 
-
-
-class TreeNode:
-    def __init__(self,key,val,left=None,right=None,parent=None,height=1,size=1,copies=1):
+class AVLNode:
+    '''Create node class with all methods associated to nodes.'''
+    def __init__(self, key, val, left=None, right=None,
+                 parent=None, height=1, size=1, copies=1):
         self.key = key
         self.val = val
         self.left = left
@@ -20,38 +19,33 @@ class TreeNode:
         self.height = height
         self.size = size
         self.copies = copies
-    def isLeft(self):
+
+    def is_left(self):
         return self.parent and self.parent.left == self
-    def isRight(self):
+
+    def is_right(self):
         return self.parent and self.parent.right == self
-    def isRoot(self):
+
+    def is_root(self):
         return not self.parent
-    def isLeaf(self):
+
+    def is_leaf(self):
         return not (self.right or self.left)
-    def hasAnyChild(self):
+
+    def has_any_child(self):
         return self.right or self.left
-    def hasBothChild(self):
+
+    def has_both_child(self):
         return self.right and self.left
-    def hasOneChildOnly(self):
-        return (not self.right and self.left) or (self.right and not self.left)
 
-    def changeNodeData(self,key,val,height,left,right,size,copies):
-        self.key = key
-        self.val = val
-        self.left = left
-        self.right = right
-        self.height = height
-        self.size = size
-        self.copies = copies
-        if self.left:
-            self.left.parent = self
-        if self.right:
-            self.right.parent = self
+    def has_one_child_only(self):
+        return ((not self.right and self.left) or
+                (self.right and not self.left))
 
-    def adjustHeightSize(self):
-        # print(f'adjusting height of {self.key}')
-        # print(f'height of {self.key} was {self.height}')
-        if self.hasBothChild():
+    def adjust_height_size(self):
+        '''Recursively adjust the height and the size of self and its ancester
+        up to the root.'''
+        if self.has_both_child():
             self.height = 1 + max([self.left.height, self.right.height])
             self.size = self.copies + self.left.size + self.right.size
         elif self.left:
@@ -61,61 +55,56 @@ class TreeNode:
             self.height = 1 + self.right.height
             self.size = self.copies + self.right.size
         else:
+            # It's a leaf
             self.height = 1
             self.size = self.copies
-        # print(f'height, size of {self.key} adjusted to {self.height}, {self.size}. adjusting {self.parent}')
         if self.parent:
-            self.parent.adjustHeightSize()
+            self.parent.adjust_height_size()
 
-    def leftDescendant(self):
+    def left_descendant(self):
         if self.left:
-            return self.left.leftDescendant()
+            return self.left.left_descendant()
         else:
             return self
 
     def successor(self):
-        # succ = None
+        '''Find the immediate successor to self in the tree and returns it.'''
         if self.right:
-            return self.right.leftDescendant()
+            return self.right.left_descendant()
         else:
             if self.parent:
-                   if self.isLeft():
-                       succ = self.parent
-                   # else:
-                   #     self.parent.right = None
-                   #     succ = self.parent.successor()
-                   #     self.parent.right = self
+                if self.is_left():
+                   succ = self.parent
         return succ
 
-    def sliceOut(self):
-        if self.isLeaf():
-            if self.isLeft():
-                   self.parent.left = None
+    def slice_out(self):
+        '''Cut out self and returns its parent from where weight adjustment is
+        propagated up towards the root.'''
+        if self.is_leaf():
+            if self.is_left():
+                self.parent.left = None
             else:
-                   self.parent.right = None
-            return self.parent #from here, weight adjustment should propagate up
-        elif self.hasAnyChild():
+                self.parent.right = None
+            return self.parent
+        elif self.has_any_child():
             if self.left:
-                   if self.isLeft():
-                      self.parent.left = self.left
-                   else:
-                      self.parent.right = self.left
-                   self.left.parent = self.parent
-                   return self.left #from here, weight adjustment should propagate up
+                if self.is_left():
+                   self.parent.left = self.left
+                else:
+                   self.parent.right = self.left
+                self.left.parent = self.parent
+                return self.left
             else:
-                   if self.isLeft():
-                      self.parent.left = self.right
-                   else:
-                      self.parent.right = self.right
-                   self.right.parent = self.parent
-                   return self.right #from here, weight adjustment should propagate up
-
+                if self.is_left():
+                   self.parent.left = self.right
+                else:
+                   self.parent.right = self.right
+                self.right.parent = self.parent
+                return self.right
 
     def __iter__(self):
-
-        """ return the iterator that iterates through the elements in the BST
-        rooted at this node in an inorder sequence """
-
+        '''Return an iterator that iterates through the elements in the BST
+        rooted at self in an inorder sequence.'''
         if self.left:
             # The following iterates through all the nodes in the left subtree.
             # The first thing that python does when the for loop is encountered
@@ -124,26 +113,28 @@ class TreeNode:
             # the __iter__ method on the left child.
             for elt in self.left:
                 yield elt
-
         # at this point we "visit" the current node
         yield (self.key, self.val, self.height, self.size, self.copies)
-
         if self.right:
             # we now visit all the nodes in the right subtree
             for elt in self.right:
                 yield elt
 
-class BinarySearchTree:
 
+class BinarySearchTree:
+    '''Build a AVL binary search tree from nodes of AVLNode.'''
     def __init__(self):
         self.root = None
         self.size = 0
 
     def __iter__(self):
-        """ returns an iterator for the binary search tree """
+        """ Return an iterator for the binary search tree."""
+
+
         class EmptyIterator:
             def next(self):
                 raise StopIteration
+
 
         if self.root:
             # if the tree is not empty, just return the root's iterator
@@ -153,142 +144,133 @@ class BinarySearchTree:
             # a StopIteration exception
             return EmptyIterator()
 
-    def rotateRight(self, currentNode):
-        # print(f'node {currentNode.key} is rotating right')
+    def rotate_right(self, currentNode):
+        '''Perform local rotation to right and update childs and parents.'''
         P, Y = currentNode.parent, currentNode.left
         B = Y.right
         Y.parent = P
-        if currentNode.isLeft():
+        if currentNode.is_left():
             P.left = Y
-        if currentNode.isRight():
+        if currentNode.is_right():
             P.right = Y
         currentNode.parent = Y
         if B:
             B.parent = currentNode
         Y.right, currentNode.left = currentNode, B
-        if P is None: # Y becomes new root
+        if P is None:
+            # Y becomes the new root
             self.root = Y
-        #     print(f'Root change to {Y.key}')
-        # print(f'Right rotation of {currentNode.key} complete')
 
-    def rotateLeft(self, currentNode): # Opposite of rotateRight
-        # print(f'node {currentNode.key} is rotating left')
+    def rotate_left(self, currentNode):
+        '''Perform local rotation to left and update childs and parents.'''
         P, X = currentNode.parent, currentNode.right
         B = X.left
         X.parent = P
-        if currentNode.isLeft():
+        if currentNode.is_left():
             P.left = X
-        if currentNode.isRight():
+        if currentNode.is_right():
             P.right = X
         currentNode.parent = X
         if B:
             B.parent = currentNode
         X.left, currentNode.right = currentNode, B
-        if P is None: # X becomes the new root
+        if P is None:
+            # X becomes the new root
             self.root = X
-        #     print(f'Root change to {X.key}')
-        # print(f'Left rotation of {currentNode.key} complete')
 
-    def rebalanceRight(self, currentNode):
-        # print(f'rebalancing {currentNode.key} towards right')
+    def rebalance_right(self, currentNode):
+        '''Rebalances the tree to right at currentNode if left subtree is
+        longer. It performs rotations and updates heights/sizes.'''
         M = currentNode.left
-        if M.hasBothChild():
+        if M.has_both_child():
             if M.right.height > M.left.height:
-                self.rotateLeft(M)
-                M.adjustHeightSize()
-        if M.hasOneChildOnly():
+                self.rotate_left(M)
+                M.adjust_height_size()
+        if M.has_one_child_only():
             if M.left:
-                self.rotateRight(M)
+                self.rotate_right(M)
             else:
-                self.rotateLeft(M)
-            M.adjustHeightSize()
+                self.rotate_left(M)
+            M.adjust_height_size()
+        self.rotate_right(currentNode)
+        currentNode.adjust_height_size()
 
-        self.rotateRight(currentNode)
-        # print(f'adjusting {currentNode.key} after right rotation')
-        currentNode.adjustHeightSize()
-        # print(f'Right rebalanced of {currentNode.key}')
-
-
-    def rebalanceLeft(self, currentNode):
-        # print(f'rebalancing {currentNode.key} towards left')
+    def rebalance_left(self, currentNode):
+        '''Rebalances the tree to right at currentNode if left subtree is
+        longer. It performs rotations and updates heights/sizes.'''
         M = currentNode.right
-        if M.hasBothChild():
+        if M.has_both_child():
             if M.left.height > M.right.height:
-                self.rotateRight(M)
-                M.adjustHeightSize()
-        if M.hasOneChildOnly():
+                self.rotate_right(M)
+                M.adjust_height_size()
+        if M.has_one_child_only():
             if M.left:
-                self.rotateRight(M)
+                self.rotate_right(M)
             else:
-                self.rotateLeft(M)
-            M.adjustHeightSize()
-        self.rotateLeft(currentNode)
-        currentNode.adjustHeightSize()
-        # print(f'Left rebalanced of {currentNode.key}')
-
+                self.rotate_left(M)
+            M.adjust_height_size()
+        self.rotate_left(currentNode)
+        currentNode.adjust_height_size()
 
     def rebalance(self,currentNode):
-        # print(f'rebalancing {currentNode.key}')
-        if currentNode.hasBothChild():
+        '''Recursively balances the tree starting at currentNode upwards to the
+        root using methods `rebalance_right` or `rebalance_left`.'''
+        if currentNode.has_both_child():
             if currentNode.left.height > currentNode.right.height+1:
-                self.rebalanceRight(currentNode)
+                self.rebalance_right(currentNode)
             elif currentNode.right.height > currentNode.left.height+1:
-                self.rebalanceLeft(currentNode)
-        if currentNode.hasOneChildOnly():
+                self.rebalance_left(currentNode)
+        if currentNode.has_one_child_only():
             if currentNode.left:
-                # print(f'{currentNode.key} has only a left child')
                 if currentNode.left.height > 1:
-                    self.rebalanceRight(currentNode)
+                    self.rebalance_right(currentNode)
             else:
-                # print(f'{currentNode.key} has only a right child')
                 if currentNode.right.height > 1:
-                    self.rebalanceLeft(currentNode)
-        # print(f'Tree rebalanced at {currentNode.key}')
+                    self.rebalance_left(currentNode)
         if currentNode.parent:
             self.rebalance(currentNode.parent)
 
-
-    def put(self,key,val=None):
+    def insert(self, key, val=None):
+        '''Insert a given key into BST by calling the private
+        method _insert. Default value of a key is None.'''
         if self.root:
-            self._put(key,val,self.root)
+            self._insert(key, val, self.root)
         else:
-            self.root = TreeNode(key,val)
-            # print(f'Creating root node {self.root.key}')
+            self.root = AVLNode(key, val)
         self.size += 1
 
-    def _put(self,key,val,currentNode):
-        # print(f'Starting from node {currentNode.key} ...')
-        if key == currentNode.key: #duplicate key
+    def _insert(self,key,val,currentNode):
+        if key == currentNode.key:
+            # Duplicate key
             currentNode.copies += 1
-            currentNode.adjustHeightSize()
-            return
+            currentNode.adjust_height_size()
+            return None
         elif key < currentNode.key:
             if currentNode.left:
-                self._put(key,val,currentNode.left)
+                self._insert(key, val, currentNode.left)
             else:
-                currentNode.left = TreeNode(key,val,parent=currentNode)
-                # print(f'{key} attached to left of {currentNode.key}')
-                # print(f'height {currentNode.key} is {currentNode.height}. New node created as left child of {currentNode.key}')
-                currentNode.adjustHeightSize()
+                currentNode.left = AVLNode(key, val, parent=currentNode)
+                currentNode.adjust_height_size()
                 self.rebalance(currentNode)
         else:
             if currentNode.right:
-                self._put(key,val,currentNode.right)
+                self._insert(key, val, currentNode.right)
             else:
-                currentNode.right = TreeNode(key,val,parent=currentNode)
-                # print(f'{key} attached to right of {currentNode.key}')
-                currentNode.adjustHeightSize()
+                currentNode.right = AVLNode(key, val, parent=currentNode)
+                currentNode.adjust_height_size()
                 self.rebalance(currentNode)
 
+    # With the insert method defined, we can easily overload the [] operator for
+    # assignment by having the __setitem__ method call the insert method.
+    # This allows us to write Python statements like myTree['Plymouth']=55446,
+    # just like a Python dictionary.
+    def __setitem__(self, key, value):
+        self.insert(key, value)
 
-    '''With the put method defined, we can easily overload the [] operator for assignment by having the __setitem__ method call the put method.
-    This allows us to write Python statements like myZipTree['Plymouth'] = 55446, just like a Python dictionary.'''
-    def __setitem__(self,k,v):
-        self.put(k,v)
-
-    def get(self,key):
+    def get(self, key):
+        '''Return the value for a given key.'''
         if self.root:
-            res = self._get(key,self.root)
+            res = self._get(key, self.root)
             if res:
                    return res.val
             else:
@@ -296,26 +278,32 @@ class BinarySearchTree:
         else:
             return None
 
-    def _get(self,key,currentNode):
+    def _get(self, key, currentNode):
+        '''Recursively search for a node with given key in the subtree
+        under the current node.'''
         if not currentNode:
             return None
         elif currentNode.key == key:
             return currentNode
         elif key < currentNode.key:
-            return self._get(key,currentNode.left)
+            return self._get(key, currentNode.left)
         else:
-            return self._get(key,currentNode.right)
+            return self._get(key, currentNode.right)
 
-    def __getitem__(self,key):
+    # Overloads the [] operator for getting value for given key.
+    def __getitem__(self, key):
         return self.get(key)
 
-    def __contains__(self,key):
-        if self._get(key,self.root):
+    # Allows `in` operator to work, in a for loop for instance.
+    def __contains__(self, key):
+        if self._get(key, self.root):
             return True
         else:
             return False
 
-    def delete(self,key):
+    def delete(self, key):
+        '''Finds the node with given key and removes it from the tree or reduces
+        its multiplicity (copies).'''
         if self.size > 1:
             nodeToRemove = self._get(key, self.root)
             if nodeToRemove:
@@ -329,64 +317,64 @@ class BinarySearchTree:
         else:
             raise KeyError('Error, key not in tree')
 
-    def __delitem__(self,key):
+    # Allows for `del` operator to work
+    def __delitem__(self, key):
         self.delete(key)
 
-    def remove(self,currentNode):
+    def remove(self, currentNode):
+        '''Implement the process of removing a node or reducing
+        its multiplicity (copies).'''
         if currentNode.copies > 1:
             currentNode.copies -= 1
-            currentNode.adjustHeightSize()
-        elif currentNode.isLeaf():
-            p = currentNode.sliceOut() #leaf
-            p.adjustHeightSize()
+            currentNode.adjust_height_size()
+        elif currentNode.is_leaf():
+            p = currentNode.slice_out()
+            p.adjust_height_size()
             self.rebalance(p)
-
-        elif currentNode.hasBothChild(): #interior
+        elif currentNode.has_both_child():
+            # The node should be replaced by its successor
             succ = currentNode.successor()
             parent = succ.parent
-            p = succ.sliceOut()
+            p = succ.slice_out()
             currentNode.key = succ.key
             currentNode.val = succ.val
-            p.adjustHeightSize()
+            p.adjust_height_size()
             self.rebalance(p)
-
-        else: # this node has one child
-            P = None
+        else:
+            # This node has only one child
             if currentNode.left:
                 P = currentNode.left
-                if currentNode.isLeft():
+                if currentNode.is_left():
                     currentNode.left.parent = currentNode.parent
                     currentNode.parent.left = currentNode.left
-                elif currentNode.isRight():
+                elif currentNode.is_right():
                     currentNode.left.parent = currentNode.parent
                     currentNode.parent.right = currentNode.left
-                else:   #it is the root
-                    currentNode.changeNodeData(currentNode.left.key,
-                                        currentNode.left.val,
-                                        currentNode.left.height,
-                                        currentNode.right.size,
-                                        currentNode.left.left,
-                                        currentNode.left.right)
+                else:
+                    # It is the root
+                    self.root = currentNode.left
+                    currentNode.left.parent = None
             else:
                 P = currentNode.right
-                if currentNode.isLeft():
+                if currentNode.is_left():
                     currentNode.right.parent = currentNode.parent
                     currentNode.parent.left = currentNode.right
-                elif currentNode.isRight():
+                elif currentNode.is_right():
                     currentNode.right.parent = currentNode.parent
                     currentNode.parent.right = currentNode.right
                 else:
-                    currentNode.changeNodeData(currentNode.right.key,
-                                        currentNode.right.val,
-                                        currentNode.right.height,
-                                        currentNode.right.size,
-                                        currentNode.right.left,
-                                        currentNode.right.right)
-            P.adjustHeightSize()
+                    self.root = currentNode.right
+                    currentNode.right.parent = None
+            P.adjust_height_size()
             self.rebalance(P)
 
 
-def findByRank(root, k):
+# Diferent funtionalities can be deriven from BSTs by adding appropriate
+# fields, such as node size. One of these applications is to caculate rolling
+# statstics such as median, percentiles and so on.
+
+def find_by_rank(root, k):
+    '''Find the k th smallest elemnt in the tree.'''
     if root is None:
         print('Error: not found')
     if root.left is None:
@@ -394,53 +382,31 @@ def findByRank(root, k):
     else:
         leftcount = root.left.size
     if k <= leftcount:
-        return findByRank(root.left, k)
-    elif k > leftcount and k <= leftcount + root.copies:
+        return find_by_rank(root.left, k)
+    elif (k>leftcount) and (k<=leftcount+root.copies):
         return root.key
-    elif k > leftcount + root.copies:
-        return findByRank(root.right, k-leftcount-root.copies)
-
+    elif k > leftcount+root.copies:
+        return find_by_rank(root.right, k-leftcount-root.copies)
 
 def median(tree):
+    '''Find the median of the tree using rank function.'''
     size = tree.size
-    if size % 2 == 1:
-        mid = (size + 1)//2
-        return findByRank(tree.root, mid)
+    if size%2 == 1:
+        mid = (size+1) // 2
+        return find_by_rank(tree.root, mid)
     else:
-        return (findByRank(tree.root, size//2) + findByRank(tree.root, size//2+1))/2
-
-
-
-bst = BinarySearchTree()
-
-def activityNotifications(expend, d):
-    s = 0
-    for i in range(d):
-        bst.put(expend[i])
-    for i in range(d,n):
-        med = median(bst)
-        #print(med)
-        if expend[i] >= 2*med:
-            s += 1
-        del bst[expend[i-d]]
-        bst.put(expend[i])
-    return s
+        return (find_by_rank(tree.root, size//2)
+                + find_by_rank(tree.root, size//2+1))/2
 
 
 if __name__ == '__main__':
-
-    fptr = open(os.environ['OUTPUT_PATH'], 'w')
-
-    first_multiple_input = input().rstrip().split()
-
-    n = int(first_multiple_input[0])
-
-    d = int(first_multiple_input[1])
-
-    expenditure = list(map(int, input().rstrip().split()))
-
-    result = activityNotifications(expenditure, d)
-
-    fptr.write(str(result) + '\n')
-    
-    fptr.close()
+    # Let's find median of a list of numbers with repetition:
+    bst = BinarySearchTree()
+    List = [3.7, 2, 4, 5.5, 4, 6.1, 7, 2, 3]
+    for elem in List:
+        bst.insert(elem)     # or we can say "bst[elem]"
+    print('Nodes in the tree are:')
+    for node in bst:
+        print(node)
+    print('\n')
+    print('median({}) = {}'.format(List, median(bst)))
