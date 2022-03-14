@@ -1,14 +1,9 @@
 #!/usr/bin/python3
 
-import math
-import os
-import random
-import re
-import sys
-
+# AVL- Python Implementation
 
 class AVLNode:
-    '''Create node class with all methods associated to nodes.'''
+    '''Create nodes with their associated methods.'''
     def __init__(self, key, val, left=None, right=None,
                  parent=None, height=1, size=1, copies=1):
         self.key = key
@@ -43,7 +38,7 @@ class AVLNode:
                 (self.right and not self.left))
 
     def adjust_height_size(self):
-        '''Recursively adjust the height and the size of self and its ancester
+        '''Recursively adjust the height and the size of self and its ancesters
         up to the root.'''
         if self.has_both_child():
             self.height = 1 + max([self.left.height, self.right.height])
@@ -68,7 +63,7 @@ class AVLNode:
             return self
 
     def successor(self):
-        '''Find the immediate successor to self in the tree and returns it.'''
+        '''Find the immediate successor to self in the tree and return it.'''
         if self.right:
             return self.right.left_descendant()
         else:
@@ -78,8 +73,8 @@ class AVLNode:
         return succ
 
     def slice_out(self):
-        '''Cut out self and returns its parent from where weight adjustment is
-        propagated up towards the root.'''
+        '''Cut out self and return its parent from where height-size adjustment
+        is propagated up towards the root.'''
         if self.is_leaf():
             if self.is_left():
                 self.parent.left = None
@@ -104,7 +99,8 @@ class AVLNode:
 
     def __iter__(self):
         '''Return an iterator that iterates through the elements in the BST
-        rooted at self in an inorder sequence.'''
+        rooted at self in an inorder sequence and yield nodes with all
+        their contents.'''
         if self.left:
             # The following iterates through all the nodes in the left subtree.
             # The first thing that python does when the for loop is encountered
@@ -122,7 +118,7 @@ class AVLNode:
 
 
 class BinarySearchTree:
-    '''Build a AVL binary search tree from nodes of AVLNode.'''
+    '''Build a AVL binary search tree.'''
     def __init__(self):
         self.root = None
         self.size = 0
@@ -130,11 +126,9 @@ class BinarySearchTree:
     def __iter__(self):
         """ Return an iterator for the binary search tree."""
 
-
         class EmptyIterator:
             def next(self):
                 raise StopIteration
-
 
         if self.root:
             # if the tree is not empty, just return the root's iterator
@@ -145,7 +139,7 @@ class BinarySearchTree:
             return EmptyIterator()
 
     def rotate_right(self, currentNode):
-        '''Perform local rotation to right and update childs and parents.'''
+        '''Perform local rotation to right and update children and parents.'''
         P, Y = currentNode.parent, currentNode.left
         B = Y.right
         Y.parent = P
@@ -162,7 +156,7 @@ class BinarySearchTree:
             self.root = Y
 
     def rotate_left(self, currentNode):
-        '''Perform local rotation to left and update childs and parents.'''
+        '''Perform local rotation to left and update children and parents.'''
         P, X = currentNode.parent, currentNode.right
         B = X.left
         X.parent = P
@@ -179,8 +173,8 @@ class BinarySearchTree:
             self.root = X
 
     def rebalance_right(self, currentNode):
-        '''Rebalances the tree to right at currentNode if left subtree is
-        longer. It performs rotations and updates heights/sizes.'''
+        '''Rebalance the tree to right at current node if left subtree is
+        longer. Perform rotations and update heights/sizes.'''
         M = currentNode.left
         if M.has_both_child():
             if M.right.height > M.left.height:
@@ -196,8 +190,8 @@ class BinarySearchTree:
         currentNode.adjust_height_size()
 
     def rebalance_left(self, currentNode):
-        '''Rebalances the tree to right at currentNode if left subtree is
-        longer. It performs rotations and updates heights/sizes.'''
+        '''Rebalance the tree to right at current node if left subtree is
+        longer. Perform rotations and update heights/sizes.'''
         M = currentNode.right
         if M.has_both_child():
             if M.left.height > M.right.height:
@@ -213,7 +207,7 @@ class BinarySearchTree:
         currentNode.adjust_height_size()
 
     def rebalance(self,currentNode):
-        '''Recursively balances the tree starting at currentNode upwards to the
+        '''Recursively balance the tree starting at current node upwards to the
         root using methods `rebalance_right` or `rebalance_left`.'''
         if currentNode.has_both_child():
             if currentNode.left.height > currentNode.right.height+1:
@@ -302,7 +296,7 @@ class BinarySearchTree:
             return False
 
     def delete(self, key):
-        '''Finds the node with given key and removes it from the tree or reduces
+        '''Find the node with a given key and remove it from the tree or reduce
         its multiplicity (copies).'''
         if self.size > 1:
             nodeToRemove = self._get(key, self.root)
@@ -369,12 +363,12 @@ class BinarySearchTree:
             self.rebalance(P)
 
 
-# Diferent funtionalities can be deriven from BSTs by adding appropriate
+# Different funtionalities can be deriven from BSTs by adding appropriate
 # fields, such as node size. One of these applications is to caculate rolling
 # statstics such as median, percentiles and so on.
 
 def find_by_rank(root, k):
-    '''Find the k th smallest elemnt in the tree.'''
+    '''Find the k th smallest element in the tree.'''
     if root is None:
         print('Error: not found')
     if root.left is None:
