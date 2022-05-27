@@ -49,8 +49,7 @@ class AVLNode:
         elif self.right:
             self.height = 1 + self.right.height
             self.size = self.copies + self.right.size
-        else:
-            # It's a leaf
+        else:   # It's a leaf
             self.height = 1
             self.size = self.copies
         if self.parent:
@@ -66,10 +65,9 @@ class AVLNode:
         '''Find the immediate successor to self in the tree and return it.'''
         if self.right:
             return self.right.left_descendant()
-        else:
-            if self.parent:
-                if self.is_left():
-                   succ = self.parent
+        if self.parent:
+            if self.is_left():
+               succ = self.parent
         return succ
 
     def slice_out(self):
@@ -98,23 +96,13 @@ class AVLNode:
                 return self.right
 
     def __iter__(self):
-        '''Return an iterator that iterates through the elements in the BST
-        rooted at self in an inorder sequence and yield nodes with all
-        their contents.'''
+        '''Iterate through the elements in the BST rooted at self in an
+        in-order sequence and yield nodes with all their contents.'''
         if self.left:
-            # The following iterates through all the nodes in the left subtree.
-            # The first thing that python does when the for loop is encountered
-            # is to obtain an iterator object for the left subtree.
-            # This is done ("under the covers") by recursively calling
-            # the __iter__ method on the left child.
-            for elt in self.left:
-                yield elt
-        # at this point we "visit" the current node
+            yield from self.left
         yield (self.key, self.val, self.height, self.size, self.copies)
         if self.right:
-            # we now visit all the nodes in the right subtree
-            for elt in self.right:
-                yield elt
+            yield from self.right
 
 
 class BinarySearchTree:
@@ -151,8 +139,7 @@ class BinarySearchTree:
         if B:
             B.parent = currentNode
         Y.right, currentNode.left = currentNode, B
-        if P is None:
-            # Y becomes the new root
+        if P is None:   # Y becomes the new root
             self.root = Y
 
     def rotate_left(self, currentNode):
@@ -168,8 +155,7 @@ class BinarySearchTree:
         if B:
             B.parent = currentNode
         X.left, currentNode.right = currentNode, B
-        if P is None:
-            # X becomes the new root
+        if P is None:   # X becomes the new root
             self.root = X
 
     def rebalance_right(self, currentNode):
@@ -233,9 +219,8 @@ class BinarySearchTree:
             self.root = AVLNode(key, val)
         self.size += 1
 
-    def _insert(self,key,val,currentNode):
-        if key == currentNode.key:
-            # Duplicate key
+    def _insert(self, key, val, currentNode):
+        if key == currentNode.key:  # Duplicate key
             currentNode.copies += 1
             currentNode.adjust_height_size()
             return None
@@ -269,8 +254,7 @@ class BinarySearchTree:
                    return res.val
             else:
                    return None
-        else:
-            return None
+        return None
 
     def _get(self, key, currentNode):
         '''Recursively search for a node with given key in the subtree
@@ -334,8 +318,7 @@ class BinarySearchTree:
             currentNode.val = succ.val
             p.adjust_height_size()
             self.rebalance(p)
-        else:
-            # This node has only one child
+        else:   # This node has only one child
             if currentNode.left:
                 P = currentNode.left
                 if currentNode.is_left():
@@ -344,8 +327,7 @@ class BinarySearchTree:
                 elif currentNode.is_right():
                     currentNode.left.parent = currentNode.parent
                     currentNode.parent.right = currentNode.left
-                else:
-                    # It is the root
+                else:   # It is the root
                     self.root = currentNode.left
                     currentNode.left.parent = None
             else:
